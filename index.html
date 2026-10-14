@@ -1,0 +1,125 @@
+<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>Chaînes de Markov — laboratoire interactif</title>
+<style>
+:root{--bg:#fbfcfe;--fg:#1c2430;--mu:#5a6472;--cd:#eef3fa;--bd:#cfd9e6;--ac:#1b4f8a;--a2:#c9701a;--ok:#1a6b3a;--no:#9b1c1c;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#111821;--fg:#e6ebf2;--mu:#98a3b3;--cd:#1a2330;--bd:#2d3a4c;--ac:#4a8fe0;--a2:#f0a35a;--ok:#5cc98a;--no:#f08a8a;color-scheme:dark}}
+:root[data-theme=dark]{--bg:#111821;--fg:#e6ebf2;--mu:#98a3b3;--cd:#1a2330;--bd:#2d3a4c;--ac:#4a8fe0;--a2:#f0a35a;--ok:#5cc98a;--no:#f08a8a;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif}
+header,main{max-width:980px;margin:auto;padding:0 16px}
+h1{font:700 clamp(26px,5vw,38px)/1.15 Georgia,"Times New Roman",serif;margin:22px 0 4px;color:var(--ac)}
+h2{font:600 20px Georgia,serif;margin:0 0 6px}
+p{margin:6px 0}.sub{color:var(--mu);margin:0 0 12px}
+nav{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0 16px;border-bottom:2px solid var(--bd);padding-bottom:8px}
+button,select{font:inherit;color:var(--fg);background:var(--cd);border:1px solid var(--bd);border-radius:6px;padding:6px 12px;cursor:pointer}
+button:hover{border-color:var(--ac)}button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
+nav button.on{background:var(--ac);color:#fff;border-color:var(--ac)}
+section[hidden]{display:none}
+.row2{display:flex;gap:16px;flex-wrap:wrap}.row2>div{flex:1 1 320px;min-width:0}
+.box{background:var(--cd);border:1px solid var(--bd);border-radius:8px;padding:12px;margin:0 0 14px}
+.tools{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin:8px 0}
+input[type=range]{width:170px;accent-color:var(--ac)}
+svg{width:100%;height:auto;display:block}
+.el{font-size:9px;fill:var(--mu);text-anchor:middle}.nl{font-size:13px;fill:var(--fg)}
+circle{stroke-width:1.5}.na{fill:var(--no);fill-opacity:.3;stroke:var(--no)}.nf{fill:var(--ok);fill-opacity:.3;stroke:var(--ok)}.no{fill:var(--a2);fill-opacity:.3;stroke:var(--a2)}.cu{stroke-width:4;stroke:var(--fg)}
+.lg{font-size:13px;color:var(--mu)}.lg b{display:inline-block;width:10px;height:10px;border-radius:50%;margin:0 3px 0 8px}
+.r{display:flex;align-items:center;gap:8px;margin:5px 0}.r b{width:22px;text-align:center}.r span{font-size:13px;color:var(--mu);min-width:150px}
+.bar{position:relative;flex:1;height:16px;background:var(--bd);border-radius:4px}.bar i{position:absolute;left:0;top:0;height:100%;background:var(--ac);border-radius:4px}.bar u{position:absolute;top:-3px;height:22px;width:3px;background:var(--a2)}
+.hw{overflow-x:auto}table{border-collapse:collapse;margin:6px 0}td{width:52px;text-align:center;padding:5px 2px;border:1px solid var(--bd);font-size:13px}
+.note{border-left:4px solid var(--a2);padding:2px 10px;margin:8px 0}
+small{color:var(--mu)}.how{background:var(--cd);border:1px solid var(--bd);border-radius:8px;padding:8px 12px;margin:8px 0}.how summary{cursor:pointer;font-weight:600}.how li,.how p{margin:4px 0}.obs{border-left-color:var(--ac)}.box .sub{font-size:14px;margin:0 0 8px}
+</style></head><body>
+<header><h1>Chaînes de Markov : laboratoire</h1><p class="sub">Choisis un exemple ou un contre-exemple du cours, simule-le, lis ses classes et regarde Pⁿ converger (ou refuser de converger).</p>
+<nav><button class="on" data-t="lab">Laboratoire</button><button data-t="ruin">Ruine du joueur</button><button data-t="cont">Temps continu</button></nav></header>
+<main>
+<section id="lab">
+<div class="tools"><select id="ps" aria-label="Exemple" onchange="load(+this.value)"></select>
+<span id="al" hidden>amortissement α = <input type="range" id="alr" min=".5" max="1" step=".01" value=".85" oninput="alpha=+this.value;$('#alv').textContent=alpha;load(K)"> <b id="alv">0.85</b></span></div>
+<p class="note" id="note"></p><p class="note obs" id="obs"></p><details class="how" open><summary>Comment lire cette page</summary><ol><li><b>Choisis un exemple</b> dans la liste. Le cadre orange dit ce qu'il illustre ; le cadre bleu dit quoi manipuler et quoi regarder.</li><li><b>Graphe</b> : chaque cercle est un état, chaque flèche la probabilité de passer d'un état à l'autre en un pas.</li><li><b>Boutons de simulation</b> : « 1 pas » tire au hasard le prochain état ; « ×100 » et « ×10 000 » répètent ce tirage d'un coup ; « Auto » l'enchaîne. Regarde les barres se stabiliser.</li><li><b>Curseur n</b> : choisit le nombre de pas de la matrice Pⁿ. Il ne modifie pas la simulation, seulement la matrice affichée.</li><li><b>Curseur α</b> (PageRank seulement) : probabilité de suivre un lien plutôt que de se téléporter sur une page au hasard.</li></ol></details>
+<div class="row2">
+<div class="box"><h2>Graphe de transition</h2><p class='sub'>Un cercle = un état. Une flèche i → j porte la probabilité de passer de i à j en un pas (plus épaisse = plus probable). Le cercle cerclé de noir est l'état où se trouve la chaîne.</p><div id="gr"></div><div class="lg"><b style="background:var(--no)"></b>absorbant<b style="background:var(--ok)"></b>classe fermée<b style="background:var(--a2)"></b>classe ouverte</div><small>Clique un état pour y placer la chaîne (remise à zéro des compteurs).</small></div>
+<div class="box"><h2>Simulation</h2><p class='sub'>À chaque pas, la chaîne tire son prochain état d'après les flèches du graphe. Plus tu fais de pas, plus les fréquences se stabilisent.</p>
+<div class="tools"><button onclick="step(1);draw()">1 pas</button><button onclick="step(100);draw()">×100</button><button onclick="step(10000);draw()">×10 000</button><button id="pl" onclick="play()">▶ Auto</button><button onclick="load(K)">Remise à zéro</button></div>
+<div id="bars"></div><small>Barre bleue : part des pas passés dans l'état (ce que tu observes). Trait orange : valeur théorique vers laquelle elle doit tendre, notée π̂ (moyenne de Cesàro depuis la loi uniforme).</small></div></div>
+<div class="row2">
+<div class="box"><h2>Puissances Pⁿ</h2><p class='sub'>Case (i, j) = probabilité d'être en j après n pas en partant de i (plus foncé = plus probable). À n = 0 on n'a pas bougé (matrice identité). Quand n grandit, regarde si les lignes deviennent toutes identiques : la chaîne oublie alors son départ. La courbe orange mesure la distance à l'équilibre (trait bleu = ton n) : si elle descend vers 0, la chaîne converge ; si elle reste plate ou oscille, non.</p><div class="tools"><input type="range" id="nn" min="0" max="60" value="3" oninput="draw2()" aria-label="n"> n = <b id="nv"></b></div><div class="hw" id="heat"></div>
+<p>Écart maximal à π̂ en variation totale : <b id="tvv"></b></p><div id="spark"></div><small>Courbe : max<sub>i</sub> ‖δᵢPⁿ − π̂‖ pour n de 0 à 60. Elle tend vers 0 seulement si la chaîne converge.</small></div>
+<div class="box"><h2>Classification</h2><p class='sub'>Lue sur le graphe : quels états communiquent entre eux, lesquels sont des pièges, et le rythme des retours.</p><div id="rep"></div><small>Fermée : on n'en sort plus (récurrente). Ouverte : on peut la quitter définitivement (transiente). Période d : on ne revient en un état qu'aux instants multiples de d ; d = 1 signifie apériodique.</small></div></div>
+</section>
+
+<section id="ruin" hidden><h2>Ruine du joueur</h2><details class='how' open><summary>Comment lire cette simulation</summary><p>Un joueur possède <b>i</b> €. À chaque partie, il gagne 1 € avec la probabilité <b>p</b> et perd 1 € sinon. Il s'arrête s'il atteint <b>N</b> € (objectif) ou 0 € (ruine).</p><ul><li><b>p</b> : probabilité de gagner une partie. 0,50 = jeu équitable.</li><li><b>N</b> : fortune visée. <b>départ i</b> : fortune de départ.</li><li><b>Jouer 2000 parties</b> : rejoue le jeu 2000 fois, compare la fréquence de succès à la formule, et trace la dernière partie.</li></ul><p><b>À observer :</b> à p = 0,50, la probabilité de réussir vaut i/N. Garde i = N/2 avec p = 0,48 et augmente N : la probabilité s'effondre (environ 31 % pour N = 20, 17 % pour N = 40) alors que le désavantage semble minime. Les 2000 parties doivent donner un résultat proche de la formule.</p></details><p class="sub">Fortune i, gain de 1 € avec probabilité p, objectif N. Formule du cours contre simulation.</p>
+<div class="box"><div class="tools">p <input type="range" id="rp" min=".3" max=".7" step=".01" value=".48" oninput="ruin()"> N <input type="range" id="rN" min="3" max="40" value="20" oninput="ruin()"> départ i <input type="range" id="ri" min="1" max="39" value="10" oninput="ruin()"><button onclick="ruin(1)">Jouer 2000 parties</button></div>
+<div id="ro"></div><div id="rs"></div><small>Dernière partie simulée. Avec p = 0,48 le désavantage de 2 points par partie devient écrasant quand N grandit.</small></div></section>
+
+<section id="cont" hidden><h2>Temps continu : la machine</h2><details class='how' open><summary>Comment lire cette simulation</summary><p>Une machine est en marche ou en panne. Ici, le temps est continu : elle change d'état à des instants aléatoires.</p><ul><li><b>a</b> : taux de panne. Un taux n'est pas une probabilité : 1/a est la durée moyenne de bon fonctionnement.</li><li><b>b</b> : taux de réparation. 1/b est la durée moyenne d'une réparation.</li><li><b>Courbe</b> : probabilité que la machine marche à l'instant t, si elle marchait à t = 0. Le pointillé est sa valeur limite, b/(a+b).</li><li><b>Simuler</b> : trace une trajectoire réelle (palier haut = marche, bas = panne) et mesure le temps passé en marche sur 300 unités de temps.</li></ul><p><b>À observer :</b> augmente a : la courbe descend plus bas (plus de pannes). Augmente b : elle remonte. Les deux curseurs changent aussi la vitesse de descente (a+b). Après la simulation, la fraction de temps en marche colle à b/(a+b), et non à 50 %, bien que la machine alterne exactement entre marche et panne.</p></details><p class="sub">Marche (état 1) → panne (état 2) au taux a, réparation au taux b : P₁₁(t) = (b + a·e<sup>−(a+b)t</sup>)/(a+b).</p>
+<div class="box"><div class="tools">a <input type="range" id="ca" min=".2" max="5" step=".1" value="1" oninput="cont()"> b <input type="range" id="cb" min=".2" max="5" step=".1" value="3" oninput="cont()"><button onclick="cont(1)">Simuler (Gillespie)</button></div>
+<div id="co"></div><div id="cs"></div><div id="ct"></div><small>Courbe : disponibilité P₁₁(t). Trajectoire simulée : palier haut = marche, palier bas = panne.</small></div></section>
+</main>
+<script>
+const $=s=>document.querySelector(s),g=(a,b)=>b?g(b,a%b):a;
+const vm=(m,M)=>M[0].map((_,j)=>m.reduce((a,x,i)=>a+x*M[i][j],0));
+const mm=(A,B)=>A.map(r=>B[0].map((_,j)=>r.reduce((a,x,k)=>a+x*B[k][j],0)));
+const A5=[[0,.5,.5,0,0],[0,0,1,0,0],[1,0,0,0,0],[0,0,.5,0,.5],[0,0,0,1,0]];
+let alpha=.85,K,P,L,pi,mats,cur,cnt,tot,tm=null;
+const PR=[
+{n:'Météo (fil rouge)',L:['☀','☁','☂'],P:()=>[[.5,.5,0],[.25,.5,.25],[0,.5,.5]],t:'Irréductible et apériodique : Pⁿ → 1π avec π = (¼, ½, ¼), à la vitesse 2⁻ⁿ. Fais défiler n et vois les lignes se rapprocher.'},
+{n:'Deux états (a = 0,3 ; b = 0,2)',L:['1','2'],P:()=>[[.7,.3],[.2,.8]],t:'λ = 1 − a − b = 0,5 : Pⁿ = Π + λⁿR, convergence géométrique de raison 0,5 vers π = (0,4 ; 0,6).'},
+{n:'Six états (classes)',L:'123456'.split(''),P:()=>[[.5,.5,0,0,0,0],[.25,0,.25,0,0,.5],[0,0,0,1,0,0],[0,0,0,0,1,0],[0,0,1,0,0,0],[0,0,0,0,0,1]],t:'{1,2} ouverte (transiente), {3,4,5} fermée de période 3, 6 absorbant. Depuis 1, la chaîne finit dans {3,4,5} avec probabilité 1/3 et en 6 avec probabilité 2/3 : place-la en 1 et relance plusieurs fois.'},
+{n:'Ehrenfest N = 4 (périodique)',L:'01234'.split(''),P:()=>[[0,1,0,0,0],[.25,0,.75,0,0],[0,.5,0,.5,0],[0,0,.75,0,.25],[0,0,0,1,0]],t:'Période 2 : Pⁿ ne converge pas (elle alterne) mais la moyenne temporelle converge vers π = (1,4,6,4,1)/16, la loi Bin(4, ½).'},
+{n:'Contre-ex. : cycle à 2 états',L:['1','2'],P:()=>[[0,1],[1,0]],t:'Irréductible mais périodique : Pⁿ alterne entre P et I et ne converge pas. Pourtant π = (½, ½) existe et le théorème ergodique tient.'},
+{n:'Contre-ex. : cycle à 3 états',L:['1','2','3'],P:()=>[[0,1,0],[0,0,1],[1,0,0]],t:'La loi uniforme est stationnaire mais pas réversible : π₁p₁₂ = ⅓ alors que π₂p₂₁ = 0. Le bilan détaillé est suffisant, pas nécessaire.'},
+{n:'Contre-ex. : P = I (réductible)',L:['1','2'],P:()=>[[1,0],[0,1]],t:'Toute loi est invariante et la limite dépend de l’état de départ : clique sur l’état 2, relance, compare.'},
+{n:'Wright–Fisher N = 4',s:2,L:'01234'.split(''),P:()=>[0,1,2,3,4].map(i=>[0,1,2,3,4].map(j=>[1,4,6,4,1][j]*(i/4)**j*(1-i/4)**(4-j))),t:'0 et 4 sont absorbants ; la probabilité de fixation depuis i vaut i/4 (martingale). Elle démarre en 2 : simule (×100) jusqu’à l’absorption en 0 ou 4, puis « Remise à zéro » et recommence pour estimer la fixation (théorie : 2/4).'},
+{n:'PageRank (5 pages)',L:'12345'.split(''),al:1,P:()=>A5.map(r=>r.map(x=>alpha*x+(1-alpha)/5)),t:'α = 1 : {4,5} est transiente et π n’est pas unique. α = 0,85 : tous les coefficients sont > 0, la chaîne est irréductible et π ≈ (0,327 ; 0,169 ; 0,350 ; 0,087 ; 0,067). Glisse α.'}];
+const OBS=[`Mets n = 1, 2, 3… : les trois lignes de la matrice deviennent presque identiques (¼, ½, ¼). Puis fais ×10 000 : la barre bleue de chaque état se cale sur le trait orange.`,`Fais glisser n de 0 à 10 : la case (1,1) passe de 1 à 0,4 en perdant la moitié de son écart à chaque pas (raison 0,5). Sur la courbe orange, la descente est une exponentielle.`,`Dans la classification, 1 et 2 sont ouvertes : on peut en sortir pour toujours. Fais ×100 depuis 1 : la chaîne finit piégée dans le cycle 3→4→5 (probabilité 1/3) ou en 6 (2/3). Dans la matrice, la case (1, 6) tend vers 0,67 quand n grandit.`,`Compare n = 59 et n = 60 : les cases nulles changent de place, Pⁿ ne converge pas. Pourtant, avec ×10 000, les barres bleues rejoignent les traits orange : la moyenne dans le temps converge même si la loi à l'instant n oscille.`,`Passe n de 0 à 5 : la matrice alterne entre I et P, et la courbe orange reste plate. Mais avec ×10 000, la chaîne passe 50 % du temps dans chaque état.`,`Les trois états sont visités à tour de rôle. Barres : 1/3 chacune. La courbe reste plate : Pⁿ ne converge pas, bien que l'uniforme soit stationnaire.`,`Clique sur l'état 2 puis fais ×100 : la chaîne ne bouge pas (100 % en 2). Clique sur l'état 1 : 100 % en 1. Le résultat dépend entièrement du départ, il n'y a pas de loi limite unique.`,`Les états 0 et 4 sont absorbants (en rouge). Fais ×100 : la chaîne finit bloquée en 0 ou en 4. Recommence avec « Remise à zéro » une dizaine de fois : elle finit en 4 environ une fois sur deux, comme le prédit i/4 pour i = 2.`,`Mets α = 1 : les pages 4 et 5 reçoivent un score nul (classe ouverte). Baisse α vers 0,85 : elles reçoivent un score non nul et la chaîne devient irréductible. Plus α est petit, plus les scores se rapprochent de 0,2 pour tout le monde.`];$('#ps').innerHTML=PR.map((p,i)=>`<option value="${i}">${p.n}</option>`).join('');
+function cls(P){const n=P.length,R=P.map((r,i)=>r.map((x,j)=>x>1e-12||i==j));
+for(let k=0;k<n;k++)for(let i=0;i<n;i++)for(let j=0;j<n;j++)if(R[i][k]&&R[k][j])R[i][j]=1;
+const id=Array(n).fill(-1),C=[];
+for(let i=0;i<n;i++)if(id[i]<0){const c=[];for(let j=0;j<n;j++)if(R[i][j]&&R[j][i]){id[j]=1;c.push(j)}C.push(c)}
+return C.map(c=>{const cl=c.every(i=>P[i].every((x,j)=>x<1e-12||c.includes(j)));let d=0;const lv={[c[0]]:0},q=[c[0]];
+while(q.length){const u=q.shift();c.forEach(v=>{if(P[u][v]>1e-12&&!(v in lv)){lv[v]=lv[u]+1;q.push(v)}})}
+c.forEach(u=>c.forEach(v=>{if(P[u][v]>1e-12)d=g(d,Math.abs(lv[u]+1-lv[v]))}));return{c,cl,d}})}
+function stat(P){let m=P.map(()=>1/P.length),s=m.map(()=>0);for(let k=0;k<3000;k++){m=vm(m,P);s=s.map((x,i)=>x+m[i])}return s.map(x=>x/3000)}
+function load(k){K=k;P=PR[k].P();L=PR[k].L;pi=stat(P);mats=[P.map((_,i)=>P.map((_,j)=>+(i==j)))];for(let s=1;s<=60;s++)mats.push(mm(mats[s-1],P));
+cur=PR[k].s||0;$('#ps').value=k;$('#al').hidden=!PR[k].al;$('#note').textContent=PR[k].t;$('#obs').innerHTML='<b>À observer :</b> '+OBS[k];reset()}
+function reset(){stop();cur=cur<P.length?cur:0;cnt=P.map(()=>0);cnt[cur]=1;tot=1;draw();draw2()}
+function step(m){for(;m--;){let u=Math.random(),j=0,a=P[cur][0];while(u>=a&&j<P.length-1){j++;a+=P[cur][j]}cur=j;cnt[j]++;tot++}}
+function stop(){clearInterval(tm);tm=null;$('#pl').textContent='▶ Auto'}
+function play(){if(tm)return stop();$('#pl').textContent='⏸ Pause';tm=setInterval(()=>{step(1);draw()},150)}
+function draw(){const n=P.length,pos=P.map((_,i)=>{const a=-Math.PI/2+6.2832*i/n,r=n<3?80:112;return[190+r*Math.cos(a),150+r*Math.sin(a)]});
+const C=cls(P),ty=[];C.forEach(k=>k.c.forEach(i=>ty[i]=k.c.length==1&&P[i][i]>.999?'a':k.cl?'f':'o'));
+let m=0;P.forEach(r=>r.forEach(x=>{if(x>1e-9)m++}));
+let s='<svg viewBox="0 0 380 300" role="img" aria-label="Graphe de transition"><defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="var(--mu)"/></marker></defs>';
+P.forEach((row,i)=>row.forEach((x,j)=>{if(x<1e-9)return;const[a,b]=pos[i],[c,d]=pos[j];
+if(i==j){const ox=a-190,oy=b-150,l=Math.hypot(ox,oy)||1,ux=ox/l,uy=oy/l;s+=`<circle cx="${a+ux*22}" cy="${b+uy*22}" r="9" fill="none" stroke="var(--mu)" stroke-width="${.6+2*x}"/>`;if(m<15)s+=`<text x="${a+ux*38}" y="${b+uy*38+3}" class="el">${+x.toFixed(2)}</text>`;return}
+const dx=c-a,dy=d-b,l=Math.hypot(dx,dy),ux=dx/l,uy=dy/l,x1=a+ux*17,y1=b+uy*17,x2=c-ux*19,y2=d-uy*19,mx=(a+c)/2-uy*18,my=(b+d)/2+ux*18;
+s+=`<path d="M${x1} ${y1}Q${mx} ${my} ${x2} ${y2}" fill="none" stroke="var(--mu)" stroke-width="${.6+2.2*x}" marker-end="url(#ar)" opacity=".8"/>`;
+if(m<15)s+=`<text x="${(x1+x2)/4+mx/2}" y="${(y1+y2)/4+my/2}" class="el">${+x.toFixed(2)}</text>`}));
+pos.forEach(([a,b],i)=>s+=`<g data-i="${i}" style="cursor:pointer"><circle cx="${a}" cy="${b}" r="16" class="n${ty[i]}${i==cur?' cu':''}"/><text x="${a}" y="${b+4}" text-anchor="middle" class="nl">${L[i]}</text></g>`);
+$('#gr').innerHTML=s+'</svg>';
+$('#gr').onclick=e=>{const t=e.target.closest('g[data-i]');if(t){cur=+t.dataset.i;reset()}};
+$('#bars').innerHTML=P.map((_,i)=>{const e=cnt[i]/tot;return `<div class="r"><b>${L[i]}</b><div class="bar"><i style="width:${e*100}%"></i><u style="left:${pi[i]*100}%"></u></div><span>${e.toFixed(3)} · π̂ ${pi[i].toFixed(3)}</span></div>`}).join('')+`<small>${tot} pas — état courant : ${L[cur]}</small>`}
+function draw2(){const k=+$('#nn').value,M=mats[k],tv=s=>Math.max(...mats[s].map(r=>.5*r.reduce((a,x,j)=>a+Math.abs(x-pi[j]),0)));
+$('#nv').textContent=k;
+$('#heat').innerHTML='<table>'+M.map(r=>'<tr>'+r.map(x=>`<td style="background:color-mix(in srgb,var(--ac) ${Math.round(x*85)}%,transparent);${x>.5?'color:#fff':''}">${x.toFixed(2)}</td>`).join('')+'</tr>').join('')+'</table>';
+let d='';for(let s=0;s<=60;s++)d+=(s?'L':'M')+s*5+' '+(58-tv(s)*56);
+$('#spark').innerHTML=`<svg viewBox="0 0 300 60" role="img" aria-label="Écart à la loi stationnaire en fonction de n"><path d="${d}" fill="none" stroke="var(--a2)" stroke-width="2"/><line x1="${k*5}" x2="${k*5}" y1="0" y2="60" stroke="var(--ac)"/></svg>`;
+$('#tvv').textContent=tv(k).toFixed(4);
+const C=cls(P),dl=Math.max(...mats[59].flatMap((r,i)=>r.map((x,j)=>Math.abs(x-mats[60][i][j]))));
+$('#rep').innerHTML=C.map(k=>`<div>{${k.c.map(i=>L[i]).join(', ')}} : ${k.cl?(k.c.length==1&&P[k.c[0]][k.c[0]]>.999?'absorbant':'fermée, récurrente'):'ouverte, transiente'}${k.d?`, période ${k.d}`:''}</div>`).join('')+`<p><b>${C.length==1?'Chaîne irréductible':C.length+' classes'}</b>. Pⁿ ${dl<1e-3?'<b style="color:var(--ok)">converge</b>':'<b style="color:var(--no)">ne converge pas</b>'} quand n → ∞.</p>`+(C.length==1?`<p>Temps moyens de retour mᵢ = 1/πᵢ : ${pi.map((x,i)=>L[i]+' → '+(1/x).toFixed(2)).join(' ; ')}</p>`:'')}
+function ruin(sim){const p=+$('#rp').value,N=+$('#rN').value;$('#ri').max=N-1;const i0=Math.min(+$('#ri').value,N-1);$('#ri').value=i0;
+const r=(1-p)/p,eq=Math.abs(p-.5)<.001,h=eq?i0/N:(1-r**i0)/(1-r**N);
+let o=`p = ${p} · N = ${N} · départ ${i0} €<br>Probabilité d’atteindre N : <b>${(h*100).toFixed(2)} %</b>`+(eq?`<br>Durée moyenne : <b>${i0*(N-i0)}</b> parties`:'');
+if(sim){let w=0,T=0,pa;for(let q=0;q<2000;q++){let x=i0;pa=[x];while(x>0&&x<N){x+=Math.random()<p?1:-1;pa.push(x)}if(x==N)w++;T+=pa.length-1}
+o+=`<br>Simulation : <b>${(w/20).toFixed(2)} %</b> de succès, durée moyenne ${(T/2000).toFixed(1)}`;
+$('#rs').innerHTML=`<svg viewBox="0 0 300 60" role="img" aria-label="Fortune au fil des parties"><path d="${pa.map((v,k)=>(k?'L':'M')+(k/Math.max(pa.length-1,1)*300)+' '+(58-v/N*56)).join('')}" fill="none" stroke="var(--ac)" stroke-width="1.5"/></svg>`}
+$('#ro').innerHTML=o}
+function cont(sim){const a=+$('#ca').value,b=+$('#cb').value,s=a+b,T=6/s;let d='';
+for(let k=0;k<=100;k++)d+=(k?'L':'M')+k*3+' '+(58-56*(b+a*Math.exp(-s*(T*k/100)))/s);
+$('#co').innerHTML=`a = ${a} (panne), b = ${b} (réparation)<br>P₁₁(t) = ${(b/s).toFixed(3)} + ${(a/s).toFixed(3)}·e<sup>−${s.toFixed(1)}t</sup> → π₁ = <b>${(b/s).toFixed(3)}</b>`;
+$('#cs').innerHTML=`<svg viewBox="0 0 300 60" role="img" aria-label="Disponibilité en fonction du temps"><path d="${d}" fill="none" stroke="var(--a2)" stroke-width="2"/><line x1="0" x2="300" y1="${58-56*b/s}" y2="${58-56*b/s}" stroke="var(--mu)" stroke-dasharray="4"/></svg>`;
+if(sim){let t=0,x=0,w=[0,0],sg=[];while(t<300){const q=x?b:a,e=-Math.log(1-Math.random())/q;w[x]+=Math.min(e,300-t);sg.push([t,x,t+e]);t+=e;x=1-x}
+let p='';sg.forEach(([t0,y,t1],k)=>{if(t0>12)return;p+=(k?'L':'M')+t0*25+' '+(y?50:10)+'L'+Math.min(t1,12)*25+' '+(y?50:10)});
+$('#ct').innerHTML=`<svg viewBox="0 0 300 60" role="img" aria-label="Trajectoire simulée"><path d="${p}" fill="none" stroke="var(--ac)" stroke-width="2"/></svg><p>Temps passé en marche sur [0, 300] : <b>${(w[0]/3).toFixed(1)} %</b> (théorie : ${(b/s*100).toFixed(1)} %). La chaîne des sauts visite pourtant 1 et 2 aussi souvent l’un que l’autre (50 % / 50 %) : il faut pondérer par les durées moyennes 1/qᵢ.</p>`}}
+document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{document.querySelectorAll('nav button').forEach(x=>x.classList.toggle('on',x==b));document.querySelectorAll('main>section').forEach(s=>s.hidden=s.id!=b.dataset.t)});
+cur=0;load(0);ruin();cont();
+</script></body></html>
